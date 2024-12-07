@@ -118,6 +118,10 @@ def get_all_distances(src1, src2, src3, all_path_distances):
         else:
             all_distances3, distance3, path3, all_paths3 = g.dijkstra(src3, item)
             all_path_distances[f'{path1}\n{path2}\n{path3}'] = distance1 + distance2 + distance3
+            for j, item2 in enumerate(all_paths2[1:-1]):
+                all_distances3, distance3, path3, all_paths3 = g.dijkstra(src3, item2)
+                all_path_distances[f'{path1}\n{path2}\n{path3}'] = distance1 + distance2 + distance3
+
     all_distances2, distance2, path2, all_paths2 = g.dijkstra(src2, dst)
     all_distances3, distance3, path3, all_paths3 = g.dijkstra(src3, dst)
     all_path_distances[f'{path1}\n{path2}'] = distance1 + distance2 + distance3
@@ -168,9 +172,10 @@ if __name__ == '__main__':
             for src3 in srcs:
                 if src1 != src2 and src2 != src3 and src1 != src3:
                     all_path_distances = get_all_distances(src1, src2, src3, all_path_distances)
+
+    shortest = min(all_path_distances.values())
     for k, v in all_path_distances.items():
-        print(k)
-        print(v)
-        print()
-
-
+        if v == shortest:
+            print(k)
+            print(v)
+            print()
