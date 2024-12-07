@@ -1,6 +1,9 @@
 import json
 import igraph as ig
 from matplotlib import pyplot as plt
+import numpy as np
+import itertools
+
 
 palette = [[0, 192, 64], [0, 192, 64], [0, 64, 96], [128, 192, 192],
            [0, 64, 64], [0, 192, 224], [0, 192, 192], [128, 192, 64],
@@ -51,6 +54,7 @@ class Graph:
     """
     From https://www.w3schools.com/dsa/dsa_algo_graphs_dijkstra.php
     """
+
     def __init__(self, size):
         self.adj_matrix = [[0] * size for _ in range(size)]
         self.size = size
@@ -84,15 +88,14 @@ class Graph:
                 break
 
             visited[u] = True
-
             for v in range(self.size):
                 if self.adj_matrix[u][v] != 0 and not visited[v]:
                     alt = distances[u] + self.adj_matrix[u][v]
                     if alt < distances[v]:
                         distances[v] = alt
                         predecessors[v] = u
-
-        return distances[end_vertex], self.get_path(predecessors, start_vertex_data, end_vertex_data)
+        path, all_paths = self.get_path(predecessors, start_vertex_data, end_vertex_data)
+        return distances, distances[end_vertex], path, all_paths
 
     def get_path(self, predecessors, start_vertex, end_vertex):
         path = []
@@ -103,34 +106,26 @@ class Graph:
             if current == self.vertex_data.index(start_vertex):
                 path.insert(0, start_vertex)
                 break
-        return '->'.join(path)
+        return '->'.join(path), path
 
 
-def plot_ig():
-    g = ig.Graph(
-        len(data),
-        edges,
-        directed=True
-    )
-
-    fig, ax = plt.subplots()
-    ig.plot(
-        g,
-        target=ax,
-        vertex_size=30,
-        vertex_label=names,
-        vertex_color=colors,
-    )
-    plt.show()
+def get_all_distances(src1, src2, src3, all_path_distances):
+    all_distances1, distance1, path1, all_paths1 = g.dijkstra(src1, dst)
+    for i, item in enumerate(all_paths1[1:-1]):
+        all_distances2, distance2, path2, all_paths2 = g.dijkstra(src2, item)
+        if src3 is None:
+            all_path_distances[f'{path1}\n{path2}'] = distance1 + distance2
+        else:
+            all_distances3, distance3, path3, all_paths3 = g.dijkstra(src3, item)
+            all_path_distances[f'{path1}\n{path2}\n{path3}'] = distance1 + distance2 + distance3
+    all_distances2, distance2, path2, all_paths2 = g.dijkstra(src2, dst)
+    all_distances3, distance3, path3, all_paths3 = g.dijkstra(src3, dst)
+    all_path_distances[f'{path1}\n{path2}'] = distance1 + distance2 + distance3
+    return all_path_distances
 
 
 if __name__ == '__main__':
     data = json.load(open('jsons/ryza.json'))
-    src1 = 'Uni'
-    dst = 'Prosthetic Arm'
-
-    source = data[src1]
-    destination = data[dst]
 
     categories = {}
     item2idx = {}
@@ -156,8 +151,6 @@ if __name__ == '__main__':
                 else:
                     edges.append((item2idx[ing], item2idx[name]))
 
-    # plot_ig()
-
     g = Graph(len(names))
     for i, name in enumerate(names):
         g.add_vertex_data(i, name)
@@ -165,5 +158,18 @@ if __name__ == '__main__':
     for edge in edges:
         g.add_edge(edge[0], edge[1])
 
-    distance, path = g.dijkstra('Clean Water', 'Bomb')
-    print(f"Path: {path}, Distance: {distance}")
+    dst = 'Brave Emblem'
+    srcs = ['Clean Water', 'Fertile Soil', 'Mushroom Powder']
+
+    all_path_distances = {}
+
+    for src1 in srcs:
+        for src2 in srcs:
+            for src3 in srcs:
+                if src1 != src2 and src2 != src3 and src1 != src3:
+                    all_path_distances = get_all_distances(src1, src2, src3, all_path_distances)
+    for k, v in all_path_distances.items():
+        print(k)
+        print(v)
+        print()
+
