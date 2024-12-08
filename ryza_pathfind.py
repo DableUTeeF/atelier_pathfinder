@@ -60,9 +60,9 @@ class Graph:
         self.size = size
         self.vertex_data = [''] * size
 
-    def add_edge(self, u, v):
+    def add_edge(self, u, v, w):
         if 0 <= u < self.size and 0 <= v < self.size:
-            self.adj_matrix[u][v] = 1
+            self.adj_matrix[u][v] = w
 
     def add_vertex_data(self, vertex, data):
         if 0 <= vertex < self.size:
@@ -109,7 +109,7 @@ class Graph:
         return '->'.join(path), path
 
 
-def get_all_distances(src1, src2, src3, all_path_distances):
+def get_all_distances(src1, src2, src3, dst, all_path_distances):
     all_distances1, distance1, path1, all_paths1 = g.dijkstra(src1, dst)
     for i, item in enumerate(all_paths1[1:-1]):
         all_distances2, distance2, path2, all_paths2 = g.dijkstra(src2, item)
@@ -123,8 +123,13 @@ def get_all_distances(src1, src2, src3, all_path_distances):
                 all_path_distances[f'{path1}\n{path2}\n{path3}'] = distance1 + distance2 + distance3
 
     all_distances2, distance2, path2, all_paths2 = g.dijkstra(src2, dst)
-    all_distances3, distance3, path3, all_paths3 = g.dijkstra(src3, dst)
-    all_path_distances[f'{path1}\n{path2}'] = distance1 + distance2 + distance3
+    path2 = '->'.join(all_paths2[:-1])
+    if src3 is None:
+        all_path_distances[f'{path1}\n{path2}'] = distance1 + distance2 - 1
+    else:
+        all_distances3, distance3, path3, all_paths3 = g.dijkstra(src3, dst)
+        path3 = '->'.join(all_paths3[:-1])
+        all_path_distances[f'{path1}\n{path2}\n{path3}'] = distance1 + distance2 + distance3 - 2
     return all_path_distances
 
 
@@ -151,19 +156,20 @@ if __name__ == '__main__':
             for ing in item['ingredients']:
                 if ing.startswith('('):
                     for cat in categories[ing]['items']:
-                        edges.append((item2idx[cat], item2idx[name]))
+                        edges.append((item2idx[cat], item2idx[name], 1.1))
                 else:
-                    edges.append((item2idx[ing], item2idx[name]))
+                    edges.append((item2idx[ing], item2idx[name], item['cost']))
 
     g = Graph(len(names))
     for i, name in enumerate(names):
         g.add_vertex_data(i, name)
 
     for edge in edges:
-        g.add_edge(edge[0], edge[1])
+        # todo: add weight for item tier. higher tier items should be shorter path than lower tier. need to keep calculated distant as 1
+        g.add_edge(edge[0], edge[1], edge[2])
 
     dst = 'Brave Emblem'
-    srcs = ['Clean Water', 'Fertile Soil', 'Mushroom Powder']
+    srcs = ['Clean Water', 'Fertile Soil', 'Goldinite']
 
     all_path_distances = {}
 
@@ -171,7 +177,7 @@ if __name__ == '__main__':
         for src2 in srcs:
             for src3 in srcs:
                 if src1 != src2 and src2 != src3 and src1 != src3:
-                    all_path_distances = get_all_distances(src1, src2, src3, all_path_distances)
+                    all_path_distances = get_all_distances(src1, src2, src3, dst, all_path_distances)
 
     shortest = min(all_path_distances.values())
     for k, v in all_path_distances.items():

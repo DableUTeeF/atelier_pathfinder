@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+{% load bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% load static %}
+
+<head>
+    <script>
+        var ryza_data = JSON.parse('{{ ryza_data | escapejs }}');
+    </script>
+    <script type="text/javascript" src="{% static 'js/iconselect.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/ryza1.js' %}"></script>
+    <!-- <script type="text/javascript" src="{% static 'js/iscroll.js' %}"></script> -->
+
+    <script>
+            
+        var iconSelects = [];
+        var selectedTexts = [];
+
+        function init(num){
+            var iconSelect = new IconSelect(`icon-select-${num}`, 
+            );
+            var icons = [{'iconFilePath': '', 'iconValue': 'None'}];
+            for (let [name, item] of Object.entries(ryza_data)){
+                let k = name.toLowerCase().replace(' ', '-').replace("'", "-");
+                icons.push(
+                    {
+                        'iconFilePath': `https://barrelwisdom.com/media/games/ryza2/items/${k}.webp?v=1`,
+                        'iconValue': k
+                    }
+                );
+            }
+            iconSelect.refresh(icons);
+            iconSelects.push(iconSelect);
+            var selectedText = document.getElementById(`selected-text-${num}`);
+            document.getElementById(`icon-select-${num}`).addEventListener('changed', function(e){
+                selectedText.value = iconSelect.getSelectedValue();
+            });
+            selectedTexts.push(selectedText);
+        }
+
+        window.onload = function(){
+            init(1);
+            init(2);
+            init(3);
+            init(4);
+        };
+        </script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/iconselect.css' %}" >
+    <meta charset="UTF-8">
+    <title>Atelier Ryza Item Pathfinder</title>
+</head>
+
+
+<body>
+    <div>
+        <div id="icon-select-1"></div>
+        <input type="text" id="selected-text-1" name="selected-text-1" class="selected-text">    
+    </div>
+    <div>
+        <div id="icon-select-2"></div>
+        <input type="text" id="selected-text-2" name="selected-text-2" class="selected-text">    
+    </div>
+    <div>
+        <div id="icon-select-3"></div>
+        <input type="text" id="selected-text-3" name="selected-text-3" class="selected-text">    
+    </div>
+    <div>
+        <div id="icon-select-4"></div>
+        <input type="text" id="selected-text-4" name="selected-text-4" class="selected-text">    
+    </div>
+    <div>
+        <button onclick="find_path()"> Calculate </button>
+    </div>
+    <div id="outputs">
+
+    </div>
+
+</body>
+</html>
